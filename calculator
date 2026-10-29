@@ -1,125 +1,241 @@
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 
 public class calculate extends JFrame implements ActionListener {
-    // Create a text field to display results
-    private JTextField textField;
 
-    // Store operator and operands
-    private String operator;
+    private JTextField textField;
     private double num1, num2, result;
+    private String operator = "";
+    private boolean newNumber = true;
 
     public calculate() {
-        // Create a frame
-        JFrame frame = new JFrame("Calculator");
-        textField = new JTextField();
-        textField.setEditable(false);
-        textField.setFont(new Font("Arial", Font.PLAIN, 24));
+        setTitle("NSVV Rocker - Scientific Calculator");
+        setSize(450, 550);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout(8, 8));
 
-        // Create buttons
-        JButton[] numberButtons = new JButton[10];
-        for (int i = 0; i < 10; i++) {
-            numberButtons[i] = new JButton(String.valueOf(i));
-            numberButtons[i].addActionListener(this);
+        textField = new JTextField("0");
+        textField.setFont(new Font("Arial", Font.BOLD, 28));
+        textField.setHorizontalAlignment(JTextField.RIGHT);
+        textField.setEditable(false);
+        add(textField, BorderLayout.NORTH);
+
+        JPanel panel = new JPanel(new GridLayout(6, 5, 6, 6));
+
+        String[] buttons = {
+            "C", "DEL", "(", ")", "/",
+            "7", "8", "9", "*", "%",
+            "4", "5", "6", "-", "^",
+            "1", "2", "3", "+", "sqrt",
+            "0", ".", "+/-", "=", "1/x",
+            "sin", "cos", "tan", "log", "ln"
+        };
+
+        for (String name : buttons) {
+            JButton button = new JButton(name);
+            button.setFont(new Font("Arial", Font.BOLD, 16));
+            button.addActionListener(this);
+            panel.add(button);
         }
 
-        JButton addButton = new JButton("+");
-        JButton subButton = new JButton("-");
-        JButton mulButton = new JButton("*");
-        JButton divButton = new JButton("/");
-        JButton eqButton = new JButton("=");
-        JButton clrButton = new JButton("C");
+        JPanel extraPanel = new JPanel(new GridLayout(1, 5, 6, 6));
+        String[] extra = {"x²", "x³", "!", "π", "e"};
 
-        // Add action listeners
-        addButton.addActionListener(this);
-        subButton.addActionListener(this);
-        mulButton.addActionListener(this);
-        divButton.addActionListener(this);
-        eqButton.addActionListener(this);
-        clrButton.addActionListener(this);
+        for (String name : extra) {
+            JButton button = new JButton(name);
+            button.setFont(new Font("Arial", Font.BOLD, 16));
+            button.addActionListener(this);
+            extraPanel.add(button);
+        }
 
-        // Create a panel to hold buttons
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(4, 4, 10, 10));
-
-        // Add buttons to the panel
-        panel.add(numberButtons[1]);
-        panel.add(numberButtons[2]);
-        panel.add(numberButtons[3]);
-        panel.add(addButton);
-        panel.add(numberButtons[4]);
-        panel.add(numberButtons[5]);
-        panel.add(numberButtons[6]);
-        panel.add(subButton);
-        panel.add(numberButtons[7]);
-        panel.add(numberButtons[8]);
-        panel.add(numberButtons[9]);
-        panel.add(mulButton);
-        panel.add(clrButton);
-        panel.add(numberButtons[0]);
-        panel.add(eqButton);
-        panel.add(divButton);
-
-        // Set layout and add components to the frame
-        frame.setLayout(new BorderLayout());
-        frame.add(textField, BorderLayout.NORTH);
-        frame.add(panel, BorderLayout.CENTER);
-
-        // Frame settings
-        frame.setSize(400, 400);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
+        add(panel, BorderLayout.CENTER);
+        add(extraPanel, BorderLayout.SOUTH);
+        setVisible(true);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand();
+        String cmd = e.getActionCommand();
+        String text = textField.getText();
 
-        // Handle number button clicks
-        for (int i = 0; i < 10; i++) {
-            if (command.equals(String.valueOf(i))) {
-                textField.setText(textField.getText() + i);
+        try {
+            // Number buttons
+            if (cmd.matches("[0-9]")) {
+                if (newNumber || text.equals("0")) {
+                    textField.setText(cmd);
+                } else {
+                    textField.setText(text + cmd);
+                }
+                newNumber = false;
+                return;
             }
-        }
 
-        // Handle operator button clicks
-        if (command.equals("+") || command.equals("-") || command.equals("*") || command.equals("/")) {
-            num1 = Double.parseDouble(textField.getText());
-            operator = command;
-            textField.setText("");
-        }
-
-        // Handle equals button click
-        if (command.equals("=")) {
-            num2 = Double.parseDouble(textField.getText());
-            switch (operator) {
-                case "+":
-                    result = num1 + num2;
-                    break;
-                case "-":
-                    result = num1 - num2;
-                    break;
-                case "*":
-                    result = num1 * num2;
-                    break;
-                case "/":
-                    result = num1 / num2;
-                    break;
+            // Decimal point
+            if (cmd.equals(".")) {
+                if (newNumber) {
+                    textField.setText("0.");
+                    newNumber = false;
+                } else if (!text.contains(".")) {
+                    textField.setText(text + ".");
+                }
+                return;
             }
-            textField.setText(String.valueOf(result));
-        }
 
-        // Handle clear button click
-        if (command.equals("C")) {
-            textField.setText("");
-            num1 = num2 = result = 0;
+            // Clear
+            if (cmd.equals("C")) {
+                textField.setText("0");
+                num1 = num2 = result = 0;
+                operator = "";
+                newNumber = true;
+                return;
+            }
+
+            // Backspace
+            if (cmd.equals("DEL")) {
+                if (!newNumber && text.length() > 1) {
+                    textField.setText(text.substring(0, text.length() - 1));
+                } else {
+                    textField.setText("0");
+                    newNumber = true;
+                }
+                return;
+            }
+
+            // Change sign
+            if (cmd.equals("+/-")) {
+                double value = Double.parseDouble(text);
+                textField.setText(format(-value));
+                newNumber = true;
+                return;
+            }
+
+            // Constants
+            if (cmd.equals("π")) {
+                textField.setText(format(Math.PI));
+                newNumber = true;
+                return;
+            }
+
+            if (cmd.equals("e")) {
+                textField.setText(format(Math.E));
+                newNumber = true;
+                return;
+            }
+
+            // Unary calculations
+            if (cmd.equals("sqrt")) {
+                double x = Double.parseDouble(text);
+                if (x < 0) throw new ArithmeticException();
+                result = Math.sqrt(x);
+            } else if (cmd.equals("x²")) {
+                double x = Double.parseDouble(text);
+                result = x * x;
+            } else if (cmd.equals("x³")) {
+                double x = Double.parseDouble(text);
+                result = x * x * x;
+            } else if (cmd.equals("!")) {
+                int n = Integer.parseInt(text);
+                if (n < 0 || n > 170 || n != Double.parseDouble(text)) {
+                    throw new ArithmeticException();
+                }
+                result = 1;
+                for (int i = 2; i <= n; i++) {
+                    result *= i;
+                }
+            } else if (cmd.equals("1/x")) {
+                double x = Double.parseDouble(text);
+                if (x == 0) throw new ArithmeticException();
+                result = 1 / x;
+            } else if (cmd.equals("%")) {
+                result = Double.parseDouble(text) / 100;
+            } else if (cmd.equals("sin")) {
+                result = Math.sin(Math.toRadians(
+                    Double.parseDouble(text)));
+            } else if (cmd.equals("cos")) {
+                result = Math.cos(Math.toRadians(
+                    Double.parseDouble(text)));
+            } else if (cmd.equals("tan")) {
+                double angle = Double.parseDouble(text);
+                if (Math.abs(Math.cos(Math.toRadians(angle))) < 1e-12) {
+                    throw new ArithmeticException();
+                }
+                result = Math.tan(Math.toRadians(angle));
+            } else if (cmd.equals("log")) {
+                double x = Double.parseDouble(text);
+                if (x <= 0) throw new ArithmeticException();
+                result = Math.log10(x);
+            } else if (cmd.equals("ln")) {
+                double x = Double.parseDouble(text);
+                if (x <= 0) throw new ArithmeticException();
+                result = Math.log(x);
+            } else if (cmd.equals("(") || cmd.equals(")")) {
+                JOptionPane.showMessageDialog(this,
+                    "Parentheses require expression parsing.");
+                return;
+            } else if (cmd.equals("=")) {
+                if (operator.isEmpty()) return;
+
+                num2 = Double.parseDouble(text);
+
+                switch (operator) {
+                    case "+": result = num1 + num2; break;
+                    case "-": result = num1 - num2; break;
+                    case "*": result = num1 * num2; break;
+                    case "/":
+                        if (num2 == 0) throw new ArithmeticException();
+                        result = num1 / num2;
+                        break;
+                    case "^": result = Math.pow(num1, num2); break;
+                    case "%": result = num1 % num2; break;
+                }
+
+                textField.setText(format(result));
+                operator = "";
+                newNumber = true;
+                return;
+            } else if (cmd.equals("+") || cmd.equals("-")
+                    || cmd.equals("*") || cmd.equals("/")
+                    || cmd.equals("^")) {
+
+                num1 = Double.parseDouble(text);
+                operator = cmd;
+                newNumber = true;
+                return;
+            } else {
+                return;
+            }
+
+            if (Double.isNaN(result) || Double.isInfinite(result)) {
+                throw new ArithmeticException();
+            }
+
+            textField.setText(format(result));
+            newNumber = true;
+
+        } catch (NumberFormatException ex) {
+            textField.setText("Invalid input");
             operator = "";
+            newNumber = true;
+        } catch (ArithmeticException ex) {
+            textField.setText("Math Error");
+            operator = "";
+            newNumber = true;
         }
     }
 
+    private String format(double value) {
+        if (value == 0) return "0";
+        if (value == Math.rint(value)
+                && Math.abs(value) < 1e15) {
+            return String.valueOf((long) value);
+        }
+        return String.valueOf(value);
+    }
+
     public static void main(String[] args) {
-        new calculate();
+        SwingUtilities.invokeLater(() -> new calculate());
     }
 }
